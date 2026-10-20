@@ -1,0 +1,312 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "spark",
+  "title": "Spark",
+  "description": "Triage your inbox, search mail, check your agenda, and draft replies in Spark without leaving Raycast.",
+  "icon": "icon.png",
+  "author": "andriy_druk",
+  "owner": "sparkmail",
+  "categories": [
+    "Communication",
+    "Productivity"
+  ],
+  "keywords": [
+    "email",
+    "mail",
+    "calendar",
+    "readdle"
+  ],
+  "license": "MIT",
+  "platforms": [
+    "macOS",
+    "Windows"
+  ],
+  "commands": [
+    {
+      "name": "show-inbox",
+      "title": "Show Inbox",
+      "subtitle": "Spark",
+      "description": "Browse your Unified Inbox by Smart Category and act on emails.",
+      "mode": "view"
+    },
+    {
+      "name": "search-mail",
+      "title": "Search Mail",
+      "subtitle": "Spark",
+      "description": "Keyword and semantic search across every folder and account.",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "query",
+          "placeholder": "Topic",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "show-folders",
+      "title": "Show Folders",
+      "subtitle": "Spark",
+      "description": "Browse every folder and label across your accounts and shared inboxes, and open one.",
+      "mode": "view"
+    },
+    {
+      "name": "show-agenda",
+      "title": "Show Agenda",
+      "subtitle": "Spark",
+      "description": "Today's, tomorrow's, or this week's calendar events.",
+      "mode": "view"
+    },
+    {
+      "name": "find-free-time",
+      "title": "Find Free Time",
+      "subtitle": "Spark",
+      "description": "Find free slots, optionally shared with attendees.",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "attendees",
+          "placeholder": "alice@co.com, bob@co.com",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "search-contacts",
+      "title": "Search Contacts",
+      "subtitle": "Spark",
+      "description": "Look up contacts by name, email, or domain.",
+      "mode": "view"
+    },
+    {
+      "name": "compose-email",
+      "title": "Compose Email",
+      "subtitle": "Spark",
+      "description": "Create a draft in Spark, from scratch or from a template.",
+      "mode": "view"
+    },
+    {
+      "name": "show-meetings",
+      "title": "Show Meeting Notes",
+      "subtitle": "Spark",
+      "description": "Browse meeting summaries, transcripts, and notes.",
+      "mode": "view"
+    }
+  ],
+  "ai": {
+    "instructions": "Spark tools act on the user's mail, calendar, contacts, and meetings through the Spark Desktop app running on this computer. Read the use-spark skill before the first Spark tool call, and follow a recipe or persona skill when the user's request matches one.",
+    "mcp": {
+      "command": "spark",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "AI_AGENT": "raycast"
+      }
+    },
+    "skills": [
+      {
+        "name": "use-spark",
+        "title": "Use Spark",
+        "description": "Use the Spark MCP server to access and act on the user's Spark email data - list emails, search by topic, read threads, check calendar events, find availability, look up contacts, view team info, draft messages (from scratch or saved templates), send drafts, share drafts with teammates, post team comments, triage threads, create/update/delete calendar events and manage attendees, and manage contacts. Use when the user asks about their emails, calendar, contacts, meetings, scheduling, or wants to send, reply, archive, snooze, assign, comment, categorize, or schedule."
+      },
+      {
+        "name": "persona-exec-assistant",
+        "title": "Persona: Exec Assistant",
+        "description": "Executive assistant persona for Spark. Morning briefings, draft replies, schedule management, and contact lookup."
+      },
+      {
+        "name": "persona-founder",
+        "title": "Persona: Founder",
+        "description": "Founder / CEO persona for Spark. High-volume triage, aggressive delegation, cross-team oversight, and selective engagement."
+      },
+      {
+        "name": "persona-freelancer",
+        "title": "Persona: Freelancer",
+        "description": "Freelancer / solo operator persona for Spark. Multi-client management, invoice follow-ups, availability, and quick responses."
+      },
+      {
+        "name": "persona-meeting-manager",
+        "title": "Persona: Meeting Manager",
+        "description": "Meeting manager persona for Spark. Meeting preparation, transcript review, follow-up drafts, and scheduling."
+      },
+      {
+        "name": "persona-project-manager",
+        "title": "Persona: Project Manager",
+        "description": "Project manager persona for Spark. Project thread tracking, stakeholder updates, action item extraction, and cross-team coordination."
+      },
+      {
+        "name": "persona-sales-rep",
+        "title": "Persona: Sales Rep",
+        "description": "Sales rep / account manager persona for Spark. Client relationship tracking, pipeline review, follow-up cadence, and deal context."
+      },
+      {
+        "name": "persona-support-agent",
+        "title": "Persona: Support Agent",
+        "description": "Support agent persona for Spark. Shared inbox processing, assignment, templated responses, and escalation via delegation."
+      },
+      {
+        "name": "persona-team-lead",
+        "title": "Persona: Team Lead",
+        "description": "Team lead persona for Spark. Team workload review, assignment distribution, shared inbox triage, and standup preparation."
+      },
+      {
+        "name": "recipe-calendar-audit",
+        "title": "Calendar Audit",
+        "description": "Analyze meeting load over a time range: total meetings, meeting hours, busiest days, back-to-back chains, and free blocks."
+      },
+      {
+        "name": "recipe-delegate-and-track",
+        "title": "Delegate and Track",
+        "description": "Assign emails to teammates with context and track delegation status."
+      },
+      {
+        "name": "recipe-draft-batch",
+        "title": "Draft Batch",
+        "description": "Review and finalize multiple pending drafts in a batch session: read context, edit, or discard."
+      },
+      {
+        "name": "recipe-end-of-day",
+        "title": "End of Day",
+        "description": "End-of-day review: check for loose ends, review pinned items, and preview tomorrow's calendar."
+      },
+      {
+        "name": "recipe-inbox-by-category",
+        "title": "Inbox by Category",
+        "description": "Process inbox in priority order by Spark's smart categories: priority first, then people, invites, notifications, newsletters."
+      },
+      {
+        "name": "recipe-inbox-zero",
+        "title": "Inbox Zero",
+        "description": "Process inbox to zero using category-first triage: review by category, read threads, then archive, move, or mark done."
+      },
+      {
+        "name": "recipe-invitation-manager",
+        "title": "Invitation Manager",
+        "description": "Process pending calendar invitations: check availability and present a decision list with recommendations."
+      },
+      {
+        "name": "recipe-label-organize",
+        "title": "Label Organize",
+        "description": "Organize emails with labels and folders: attach labels, detach wrong ones, and move misfiled emails."
+      },
+      {
+        "name": "recipe-meeting-followup",
+        "title": "Meeting Followup",
+        "description": "Review a meeting transcript and draft follow-up emails with action items to attendees."
+      },
+      {
+        "name": "recipe-meeting-prep",
+        "title": "Meeting Prep",
+        "description": "Prepare for an upcoming meeting: check agenda, search for email context, look up attendee details, and flag open threads that should be raised."
+      },
+      {
+        "name": "recipe-morning-standup",
+        "title": "Morning Standup",
+        "description": "Morning standup briefing: today's events, unread people and priority mail, and team assignment status."
+      },
+      {
+        "name": "recipe-multi-account-review",
+        "title": "Multi Account Review",
+        "description": "Review inbox status across multiple email accounts with per-account breakdown and cross-account priorities."
+      },
+      {
+        "name": "recipe-new-sender-review",
+        "title": "New Sender Review",
+        "description": "Process GateKeeper's new sender queue: review, accept legitimate contacts, and block unwanted senders."
+      },
+      {
+        "name": "recipe-newsletter-cleanup",
+        "title": "Newsletter Cleanup",
+        "description": "Audit newsletter subscriptions: block unwanted senders, unsubscribe from mailing lists, and enable AI summaries for worth-keeping ones."
+      },
+      {
+        "name": "recipe-notification-hygiene",
+        "title": "Notification Hygiene",
+        "description": "Tame notification overload by reclassifying noisy senders, grouping repetitive notifications, and bulk-archiving cleared alerts."
+      },
+      {
+        "name": "recipe-priority-tuning",
+        "title": "Priority Tuning",
+        "description": "Fine-tune Spark's priority category by marking key contacts as primary and adjusting notification importance."
+      },
+      {
+        "name": "recipe-schedule-meeting",
+        "title": "Schedule Meeting",
+        "description": "Find mutual availability with attendees and suggest meeting times."
+      },
+      {
+        "name": "recipe-shared-inbox-status",
+        "title": "Shared Inbox Status",
+        "description": "Review shared inbox health: open vs. done items, unassigned work, and per-member assignment breakdown."
+      },
+      {
+        "name": "recipe-shared-inbox-triage",
+        "title": "Shared Inbox Triage",
+        "description": "Process open items in shared inboxes: review, assign, respond, or mark done."
+      },
+      {
+        "name": "recipe-stakeholder-brief",
+        "title": "Stakeholder Brief",
+        "description": "Build a comprehensive dossier on a person by pulling all meetings they attended and email threads with them into a single relationship brief."
+      },
+      {
+        "name": "recipe-team-workload",
+        "title": "Team Workload",
+        "description": "Audit team assignment distribution: per-member loads, delegated items, unassigned work, and workload imbalances."
+      },
+      {
+        "name": "recipe-topic-timeline",
+        "title": "Topic Timeline",
+        "description": "Build a chronological narrative for a topic by interleaving meeting transcript excerpts and email thread summaries across a time range."
+      },
+      {
+        "name": "recipe-unsubscribe-audit",
+        "title": "Unsubscribe Audit",
+        "description": "Full unsubscribe audit: scan inbox, archive, and GateKeeper for newsletter senders, classify by volume and engagement, detect phishing and duplicate subscriptions, then unsubscribe via the action tool or extracted footer links."
+      },
+      {
+        "name": "recipe-vacation-catchup",
+        "title": "Vacation Catchup",
+        "description": "Process a large email backlog after time away: assess by category, batch-archive noise, and surface what needs attention."
+      },
+      {
+        "name": "recipe-weekly-digest",
+        "title": "Weekly Digest",
+        "description": "Weekly summary: this week's meetings, unread email breakdown by category, and team assignment status."
+      }
+    ]
+  },
+  "preferences": [
+    {
+      "name": "sparkPath",
+      "title": "Spark CLI Path",
+      "description": "Absolute path to the spark CLI. Leave empty to auto-detect: /usr/local/bin/spark on Mac, spark.exe from your PATH on Windows.",
+      "type": "textfield",
+      "required": false,
+      "placeholder": "Auto-detect"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "2.6.1",
+    "@raycast/utils": "2.3.2"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "2.2.0",
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.8.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.mts",
+    "typecheck": "tsc --noEmit"
+  }
+}
