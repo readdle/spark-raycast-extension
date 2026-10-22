@@ -10,7 +10,7 @@ description: >-
   emails, calendar, contacts, meetings, scheduling, or wants to send, reply,
   archive, snooze, assign, comment, categorize, or schedule.
 metadata:
-  version: 1.4.0
+  version: 1.4.1
   requires:
     mcp:
       - spark
@@ -240,7 +240,8 @@ List calendar events for a time range. Defaults to today's remaining events.
 | `week` | boolean | no | From now until end of this week. |
 | `start` | string | no | Start date (`yyyy-MM-dd` or `yyyy-MM-ddTHH:mm`). |
 | `end` | string | no | End date (same formats). |
-| `in` | string | no | Calendar account (`user@example.com`) or specific calendar (`user@example.com:Work`). |
+| `in` | string | no | Calendar account (`user@example.com`) or specific calendar (`user@example.com:Work`). A named calendar is listed even when hidden. |
+| `include_hidden` | boolean | no | Include calendars switched off in Spark's calendar view. |
 
 ```
 events {}
@@ -249,9 +250,12 @@ events { "week": true }
 events { "week": true, "in": "user@example.com" }
 events { "week": true, "in": "user@example.com:Work" }
 events { "start": "2026-03-16", "end": "2026-03-20" }
+events { "week": true, "include_hidden": true }
 ```
 
 Call `accounts` to see available calendar accounts and calendar names.
+
+**Hidden calendars:** `accounts` marks a calendar `(hidden)` when the user switched it off in Spark's calendar view. `events` leaves hidden calendars out, the same way Spark's calendar view does. Pass `include_hidden` to add them, or name one with `in` (`user@example.com:Name`) to list just that calendar. If the user expects events that aren't listed, check `accounts` for hidden calendars before concluding the calendar is empty or unsupported.
 
 ### event
 
@@ -272,7 +276,7 @@ Create, update, delete, or RSVP to a calendar event, including managing its atte
 | `alerts` | string | no | Comma-separated alert offsets (`Ns` for N seconds before, e.g. `300s,600s`) or absolute dates. |
 | `location` | string | no | Event location. |
 | `video_conference` | string | no | Attach a video conference: `auto` (account default), or `meet` / `zoom` / `teams`. |
-| `calendar` | string | no | Target calendar for `create` (`email@domain.com` or `email@domain.com:Name`). |
+| `calendar` | string | no | Target calendar for `create` (`email@domain.com` or `email@domain.com:Name`). Hidden calendars work too, and saving an event in one switches it back on in Spark's calendar view. |
 | `add` | array of string | no | Attendee email address(es) to invite (create / update). New attendees receive an invitation. |
 | `remove` | array of string | no | Attendee email address(es) to remove (update). Removed attendees receive a cancellation. The organizer cannot be removed. |
 
@@ -457,7 +461,7 @@ Create a new email draft or edit an existing one. The body is markdown and is co
 | `cc` | array of string | no | CC addresses. |
 | `bcc` | array of string | no | BCC addresses. |
 | `subject` | string | no | Subject line. |
-| `body` | string | no (yes for new) | Body content in markdown. Required for a new draft unless a template supplies one. |
+| `body` | string | no (yes for new) | Body content in markdown. Required for a new draft unless a template supplies one. `![alt](file name)` shows an attached image in the text - see [Images in the body](#images-in-the-body). |
 | `account` | string | no | Account email to send from. Personal accounts, aliases, and shared-inbox emails are all valid - any account that has triage access. |
 | `edit` | string | no | Message ID (or Spark deep link) of an existing draft to update. |
 | `reply_to` | string | no | Message ID (or deep link) to reply to. Addresses the sender alone (or the `Reply-To:` address when the message carries one). |
@@ -488,8 +492,13 @@ draft { "to": ["alice@co.com"], "subject": "Quick note", "body": "...", "no_sign
 draft { "edit": "1234", "no_signature": true }
 draft { "to": ["alice@co.com"], "subject": "Report", "body": "See attached", "attach": ["/path/to/report.pdf"] }
 draft { "to": ["alice@co.com"], "subject": "Files", "body": "Two files", "attach": ["/path/to/a.pdf", "/path/to/b.xlsx"] }
+draft { "to": ["alice@co.com"], "subject": "Q3", "body": "Revenue is up:\n\n![Q3 revenue](chart.png)", "attach": ["/path/to/chart.png"] }
 draft { "delete": "1234" }
 ```
+
+#### Images in the body
+
+To put an image in the text instead of the attachment list, attach it and show it with markdown image syntax by its file name: `"attach": ["/path/to/chart.png"], "body": "![Q3 revenue](chart.png)"`. The file can come from `attach` or already be on the draft. An `https://` image address is left as it is. A local image that matches no attached file, or a file that isn't an image, is an error, so a draft never goes out with a broken image. On `edit` with `body`, the new body decides which images stay: show an image already on the draft by its name (as `thread` on the draft lists it) to keep it, leave it out to remove it.
 
 #### Files from a sandbox
 
