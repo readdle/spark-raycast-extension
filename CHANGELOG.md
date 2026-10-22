@@ -1,5 +1,11 @@
 # Spark Changelog
 
+## [1.4.1] - 2026-10-22
+
+- Raycast AI can show attached images inside a draft's text
+- Raycast AI can list events from calendars that are hidden in Spark
+- Needs Spark Desktop with Spark CLI 1.4.1 or later for these features
+
 ## [1.4.0] - 2026-10-20
 
 - Inbox by Smart Category, Search Mail, Folders, Agenda, Find Free Time, Contacts, Compose, and Meeting Notes
