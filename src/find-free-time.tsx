@@ -83,7 +83,6 @@ function Command(props: LaunchProps<{ arguments: Arguments.FindFreeTime }>) {
       onSearchTextChange={setAttendeesText}
       throttle
       searchBarPlaceholder="Add attendees by name or email — empty for just you"
-      navigationTitle={attendees.length ? `Free with ${attendees.join(", ")}` : "Your free time"}
       searchBarAccessory={
         <List.Dropdown tooltip="Range" value={range.id} onChange={setRangeId}>
           {RANGES.map((r) => (
