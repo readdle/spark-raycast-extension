@@ -1,6 +1,6 @@
 # Spark Changelog
 
-## [Initial Version] - {PR_MERGE_DATE}
+## [1.4.1] - {PR_MERGE_DATE}
 
 - Inbox by Smart Category, Search Mail, Folders, Agenda, Find Free Time, Contacts, Compose, and Meeting Notes
 - Ask Raycast AI about your mail, calendar, and meetings with `@spark`, including ready-made Spark skills
