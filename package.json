@@ -4,8 +4,10 @@
   "title": "Spark",
   "description": "Triage your inbox, search mail, check your agenda, and draft replies in Spark without leaving Raycast.",
   "icon": "icon.png",
-  "author": "andriy_druk",
-  "owner": "sparkmail",
+  "author": "sparkmailapp",
+  "contributors": [
+    "andriy_druk"
+  ],
   "categories": [
     "Communication",
     "Productivity"
