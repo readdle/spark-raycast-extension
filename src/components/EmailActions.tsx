@@ -61,7 +61,7 @@ export default function EmailActions({
           <Action.Push
             title="Open Thread"
             icon={actionIcon("Envelope")}
-            target={<ThreadView messageId={email.id} onRemoved={onRemoved} />}
+            target={<ThreadView messageId={email.id} onRemoved={onRemoved} onChanged={onChanged} />}
           />
         )}
         <Action
