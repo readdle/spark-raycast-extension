@@ -27,7 +27,7 @@ Each account and shared inbox has its own **access level**, configured by the us
 | Level         | Allowed operations                                                                                                                                                                                                                 |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **read-only** | List, search, and read emails, threads, folders, events, contacts, meetings, teams                                                                                                                                                 |
-| **triage**    | Everything in read-only plus all write operations: `draft` (including unscheduling a scheduled draft and setting its follow-up reminder), `comment`, `action`, `contact-action`                                                    |
+| **triage**    | Everything in read-only plus all write operations: `draft` (including unscheduling a scheduled draft and setting its follow-up reminder), `comment`, `action`, `contact-action`, `history-undo`                                    |
 | **send**      | Everything in triage plus mail-emitting operations: sending drafts (`draft` with `send`, including scheduled "Send Later") and the entire `event` tool (create / update / delete / rsvp, including inviting or removing attendees) |
 
 Shared inboxes can have a different access level than the parent account - for example, a personal account may have triage access while a shared inbox under the same team is read-only or disabled.
@@ -70,6 +70,8 @@ Always call `accounts` once at the start of any non-trivial task to discover ava
 | `comment`        | triage                   | Post a team comment on a thread                                                                                                                                                                          |
 | `action`         | triage                   | Perform actions on emails (archive, pin, snooze, assign, etc.)                                                                                                                                           |
 | `contact-action` | triage                   | Perform actions on contacts (block, accept, categorize, etc.)                                                                                                                                            |
+| `history`        | read-only                | Review what Spark's tools and CLI have done and how each call ended                                                                                                                                      |
+| `history-undo`   | triage                   | Revert one history entry (an action, contact action, or new draft)                                                                                                                                       |
 
 ### accounts
 
@@ -577,7 +579,7 @@ After a blank line come the Custom Instructions: `# Custom Instructions`, a blan
 
 `send` sends an existing draft (created with `draft` or in Spark Desktop) through the owning account's outbound mail pipeline. Same validation as the desktop composer: the draft must live on an account whose access level is **send** (Settings > AI Agents), have at least one recipient, a non-empty subject, all attachments uploaded, and no unresolved manual template placeholders.
 
-**Sending waits for the user.** So the user can stop it, every `send` is held for 60 seconds before it runs: the call answers right away with `Queued: …` and nothing has been sent yet. The user can undo it in Spark Desktop during that time. After that minute, check `emails { "folder": "Outbox" }`: a sent message has left it, and one flagged `send failed` did not go out. If the user undid the send, the draft is still in Drafts. The other operations below run at once.
+**Sending waits for the user.** So the user can stop it, every `send` is held for 60 seconds before it runs: the call answers right away with `Queued: …` and nothing has been sent yet. The user can undo it in Spark Desktop during that time. After that minute, check the outcome with `history { "access": "send" }` (see [history](#history)): `ok` means it went out, `error` that it failed, and `blocked` that the user stopped it - the draft is then still in Drafts. `emails { "folder": "Outbox" }` is a second check: a sent message has left it, and one flagged `send failed` did not go out. The other operations below run at once.
 
 ```
 draft { "send": ["1234"] }
@@ -772,6 +774,57 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 
 Use `contacts` to look up email addresses.
 
+### history
+
+Every call to Spark's tools and CLI - yours, the user's, and other agents' - is recorded on the user's computer: when it ran, the items it touched, and how it ended. Use `history` to check what a call did, above all the outcome of a `send`, which answers `Queued: …` before anything is sent. Nothing is uploaded, and entries older than 30 days are pruned.
+
+| Parameter            | Type    | Required | Description                                                                                       |
+| -------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `access`             | string  | no       | Lowest access level an entry needed: `readOnly`, `triage` (default - leaves reads out), or `send` |
+| `status`             | string  | no       | `success`, `error`, or `blocked`                                                                  |
+| `from` / `to`        | string  | no       | Date range, `yyyy-MM-dd`                                                                          |
+| `details`            | boolean | no       | Add who ran each entry, every item it touched, its arguments, and its detail                      |
+| `page` / `page_size` | integer | no       | Pagination (default 50 per page)                                                                  |
+
+```
+history {}                                        # recent changes, newest first
+history { "access": "send" }                      # sends only
+history { "status": "error", "details": true }    # what failed, and why
+history { "access": "readOnly", "from": "2026-04-10" }
+```
+
+Output:
+
+```
+  ID  Time                 Command         Status  Items
+  42  2026-04-10 09:15:02  action archive  ok      message 1234 "Quarterly report" (+2 more)
+  41  2026-04-10 09:14:40  action send     error   message 5678 "Re: Budget"
+
+Page 1 of 1 (2 total entries)
+Showing entries that needed triage access or more (--access readOnly to include reads).
+Revert one with the history-undo tool.
+```
+
+Status is `ok`, `error` (it failed - `details` says why), `blocked` (Spark refused it, or the user stopped a held send), or `undone`. A `draft` send is recorded as `action send`, and gets its entry when its 60 seconds are over.
+
+### history-undo
+
+**Requires: triage** access level.
+
+Revert what one history entry changed - unpin what was pinned, put back what was moved, restore the category a contact had, or delete a draft the tools created - and mark the entry `undone`. The undo is not recorded as an entry of its own.
+
+| Parameter | Type    | Required | Description                                      |
+| --------- | ------- | -------- | ------------------------------------------------ |
+| `id`      | integer | yes      | ID of the entry, from the ID column of `history` |
+
+```
+history-undo { "id": 42 }
+```
+
+Result: `Undid entry 42: action pin on message 14602.`
+
+It works on successful `action`, `contact-action`, and new-draft entries, while their items still exist and still hold the state the entry left them in. A sent email, a deleted draft, and a calendar change can't be undone. Undo only when the user asks for it. The user can also undo an entry in Spark Desktop, under **Agent Activity**.
+
 ## Smart Categories
 
 Spark automatically classifies incoming email into six categories. Use the `category:` filter operator with `emails` and `search` to view mail by category, and use `action` / `contact-action` to reclassify and tune (triage).
@@ -849,7 +902,7 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 
 1. `draft { "to": ["alice@co.com"], "subject": "Hi", "body": "..." }` - compose and review.
 2. `draft { "send": ["<draft-ID>"] }` - send now, or add `"date"` to schedule.
-3. `emails { "folder": "Outbox" }` after a minute - confirm it went out (`send failed` means it did not).
+3. `history { "access": "send" }` after a minute - confirm it went out (`ok`; `error` or `blocked` means it did not). `emails { "folder": "Outbox" }` is a second check.
 
 **Check someone's schedule for a meeting:**
 
@@ -930,6 +983,7 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 - Before writing any draft body, call `draft { "mode": "context" }` and write in line with the Spark Profile and Custom Instructions it shows; the user's own instructions in the conversation take priority.
 - Never end a draft body with a sign-off: Spark appends the account's signature itself (`draft { "mode": "signatures" }` shows it).
 - `draft { "delete": ["<pk>"] }` discards a draft permanently - there is no Trash and no undo, so use it only when the user asked for it; it takes several IDs at once.
-- Send or schedule a draft with `draft { "send": ["<pk>"] }` (add `date` to schedule); sending waits 60 seconds for the user to undo it, so confirm the outcome in the Outbox afterwards.
+- Send or schedule a draft with `draft { "send": ["<pk>"] }` (add `date` to schedule); sending waits 60 seconds for the user to undo it, so confirm the outcome with `history` after that, and the Outbox as a second check.
 - Scheduled and unsent mail is in `emails { "folder": "Outbox" }`, not in any mail folder - check it before and after scheduling or unscheduling.
+- Use `history` to check what a call did and how it ended; when the user asks, `history-undo` reverts an action, contact action, or new draft.
 - If a write tool returns an "access denied" error, surface it to the user and point them at **Spark Desktop > Settings > AI Agents** to raise the level. They can also perform the action directly in Spark Desktop.
