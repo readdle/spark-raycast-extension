@@ -10,7 +10,7 @@ description: >-
   emails, calendar, contacts, meetings, scheduling, or wants to send, reply,
   archive, snooze, assign, comment, categorize, or schedule.
 metadata:
-  version: 1.4.3
+  version: 1.4.4
   requires:
     mcp:
       - spark
