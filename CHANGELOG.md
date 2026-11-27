@@ -1,5 +1,10 @@
 # Spark Changelog
 
+## [1.4.5] - {PR_MERGE_DATE}
+
+- Raycast AI checks whether a sent draft went out, reviews what Spark's AI tools did, and undoes an action when you ask, with Spark's history
+- Raycast AI removes an assignment, sending a shared inbox item back to Unassigned, and finds unassigned mail with `is:unassigned`
+
 ## [1.4.4] - {PR_MERGE_DATE}
 
 - Open in Spark opens the selected email, draft, or meeting on Windows, not just Spark's window

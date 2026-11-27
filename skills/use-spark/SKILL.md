@@ -10,7 +10,7 @@ description: >-
   emails, calendar, contacts, meetings, scheduling, or wants to send, reply,
   archive, snooze, assign, comment, categorize, or schedule.
 metadata:
-  version: 1.4.3
+  version: 1.4.4
   requires:
     mcp:
       - spark
@@ -27,7 +27,7 @@ Each account and shared inbox has its own **access level**, configured by the us
 | Level         | Allowed operations                                                                                                                                                                                                                 |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **read-only** | List, search, and read emails, threads, folders, events, contacts, meetings, teams                                                                                                                                                 |
-| **triage**    | Everything in read-only plus all write operations: `draft` (including unscheduling a scheduled draft and setting its follow-up reminder), `comment`, `action`, `contact-action`                                                    |
+| **triage**    | Everything in read-only plus all write operations: `draft` (including unscheduling a scheduled draft and setting its follow-up reminder), `comment`, `action`, `contact-action`, `history-undo`                                    |
 | **send**      | Everything in triage plus mail-emitting operations: sending drafts (`draft` with `send`, including scheduled "Send Later") and the entire `event` tool (create / update / delete / rsvp, including inviting or removing attendees) |
 
 Shared inboxes can have a different access level than the parent account - for example, a personal account may have triage access while a shared inbox under the same team is read-only or disabled.
@@ -70,6 +70,8 @@ Always call `accounts` once at the start of any non-trivial task to discover ava
 | `comment`        | triage                   | Post a team comment on a thread                                                                                                                                                                          |
 | `action`         | triage                   | Perform actions on emails (archive, pin, snooze, assign, etc.)                                                                                                                                           |
 | `contact-action` | triage                   | Perform actions on contacts (block, accept, categorize, etc.)                                                                                                                                            |
+| `history`        | read-only                | Review what Spark's tools and CLI have done and how each call ended                                                                                                                                      |
+| `history-undo`   | triage                   | Revert one history entry (an action, contact action, or new draft)                                                                                                                                       |
 
 ### accounts
 
@@ -155,6 +157,7 @@ emails { "new_senders": true }
 | `is:shared_inbox_done` | completed/closed items in shared inbox                                                    |
 | `category:<name>`      | `priority`, `personal`, `notification`, `newsletter`, `invitation`, `invitation_response` |
 | `assigned_to:<who>`    | `me`, `<email>`, `unassigned`, `other`                                                    |
+| `is:unassigned`        | same as `assigned_to:unassigned`                                                          |
 | `assigned_by:me`       | emails you delegated                                                                      |
 | `filename:<name>`      | `filename:report.pdf`                                                                     |
 
@@ -577,7 +580,7 @@ After a blank line come the Custom Instructions: `# Custom Instructions`, a blan
 
 `send` sends an existing draft (created with `draft` or in Spark Desktop) through the owning account's outbound mail pipeline. Same validation as the desktop composer: the draft must live on an account whose access level is **send** (Settings > AI Agents), have at least one recipient, a non-empty subject, all attachments uploaded, and no unresolved manual template placeholders.
 
-**Sending waits for the user.** So the user can stop it, every `send` is held for 60 seconds before it runs: the call answers right away with `Queued: …` and nothing has been sent yet. The user can undo it in Spark Desktop during that time. After that minute, check `emails { "folder": "Outbox" }`: a sent message has left it, and one flagged `send failed` did not go out. If the user undid the send, the draft is still in Drafts. The other operations below run at once.
+**Sending waits for the user.** So the user can stop it, every `send` is held for 60 seconds before it runs: the call answers right away with `Queued: …` and nothing has been sent yet. The user can undo it in Spark Desktop during that time. After that minute, check the outcome with `history { "access": "send" }` (see [history](#history)): `ok` means it went out, `error` that it failed, and `blocked` that the user stopped it - the draft is then still in Drafts. `emails { "folder": "Outbox" }` is a second check: a sent message has left it, and one flagged `send failed` did not go out. The other operations below run at once.
 
 ```
 draft { "send": ["1234"] }
@@ -674,38 +677,39 @@ Perform an action on one or more emails. Pass `action_name` plus a `message_ids`
 
 Supported `action_name` values:
 
-| Action                       | Effect                                                      |
-| ---------------------------- | ----------------------------------------------------------- |
-| `pin`                        | Pin the message to keep it at the top                       |
-| `unpin`                      | Remove the pin                                              |
-| `mute`                       | Mute the thread (stop notifications)                        |
-| `unmute`                     | Unmute a previously muted thread                            |
-| `snooze`                     | Snooze until `date`                                         |
-| `unsnooze`                   | Remove snooze, return to inbox                              |
-| `changeReminder`             | Set a follow-up reminder for `date` if no reply             |
-| `clearReminder`              | Remove the follow-up reminder                               |
-| `setAside`                   | Set aside for later review                                  |
-| `archive`                    | Archive                                                     |
-| `moveToInbox`                | Move back to inbox                                          |
-| `moveToTrash`                | Move to trash                                               |
-| `moveToFolder`               | Move to `folder`                                            |
-| `attachLabel`                | Attach Gmail/Spark Team label `folder` (keeps other labels) |
-| `detachLabel`                | Remove Gmail/Spark Team label `folder`                      |
-| `markAsDone`                 | Mark as done                                                |
-| `markAsUndone`               | Mark as not done                                            |
-| `markAsSeen`                 | Mark as read                                                |
-| `markAsUnseen`               | Mark as unread                                              |
-| `markAsSpam`                 | Mark as spam                                                |
-| `markThreadAsPriority`       | Mark thread as priority                                     |
-| `unmarkThreadAsPriority`     | Remove priority                                             |
-| `unsubscribe`                | Unsubscribe from sender/mailing list                        |
-| `changeCategoryPersonal`     | Reclassify as Personal                                      |
-| `changeCategoryNotification` | Reclassify as Notification                                  |
-| `changeCategoryNewsletters`  | Reclassify as Newsletter                                    |
-| `shareInTeam`                | Share thread with teammates (`team`, `user`)                |
-| `assign`                     | Assign to teammate (`assignee`, optional `date`, `comment`) |
-| `delegationComplete`         | Mark delegation as complete                                 |
-| `delegationReopen`           | Reopen a completed delegation                               |
+| Action                       | Effect                                                                                                                                                                      |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pin`                        | Pin the message to keep it at the top                                                                                                                                       |
+| `unpin`                      | Remove the pin                                                                                                                                                              |
+| `mute`                       | Mute the thread (stop notifications)                                                                                                                                        |
+| `unmute`                     | Unmute a previously muted thread                                                                                                                                            |
+| `snooze`                     | Snooze until `date`                                                                                                                                                         |
+| `unsnooze`                   | Remove snooze, return to inbox                                                                                                                                              |
+| `changeReminder`             | Set a follow-up reminder for `date` if no reply                                                                                                                             |
+| `clearReminder`              | Remove the follow-up reminder                                                                                                                                               |
+| `setAside`                   | Set aside for later review                                                                                                                                                  |
+| `archive`                    | Archive                                                                                                                                                                     |
+| `moveToInbox`                | Move back to inbox                                                                                                                                                          |
+| `moveToTrash`                | Move to trash                                                                                                                                                               |
+| `moveToFolder`               | Move to `folder`                                                                                                                                                            |
+| `attachLabel`                | Attach Gmail/Spark Team label `folder` (keeps other labels)                                                                                                                 |
+| `detachLabel`                | Remove Gmail/Spark Team label `folder`                                                                                                                                      |
+| `markAsDone`                 | Mark as done                                                                                                                                                                |
+| `markAsUndone`               | Mark as not done                                                                                                                                                            |
+| `markAsSeen`                 | Mark as read                                                                                                                                                                |
+| `markAsUnseen`               | Mark as unread                                                                                                                                                              |
+| `markAsSpam`                 | Mark as spam                                                                                                                                                                |
+| `markThreadAsPriority`       | Mark thread as priority                                                                                                                                                     |
+| `unmarkThreadAsPriority`     | Remove priority                                                                                                                                                             |
+| `unsubscribe`                | Unsubscribe from sender/mailing list                                                                                                                                        |
+| `changeCategoryPersonal`     | Reclassify as Personal                                                                                                                                                      |
+| `changeCategoryNotification` | Reclassify as Notification                                                                                                                                                  |
+| `changeCategoryNewsletters`  | Reclassify as Newsletter                                                                                                                                                    |
+| `shareInTeam`                | Share thread with teammates (`team`, `user`)                                                                                                                                |
+| `assign`                     | Assign to teammate (`assignee`, optional `date`, `comment`)                                                                                                                 |
+| `unassign`                   | Remove the assignment; in a shared inbox the thread returns to Unassigned. Fails if the thread is not assigned. Outside a shared inbox, reopen a completed delegation first |
+| `delegationComplete`         | Mark delegation as complete                                                                                                                                                 |
+| `delegationReopen`           | Reopen a completed delegation                                                                                                                                               |
 
 **Several messages at once:** pass several IDs in `message_ids` (`["100", "200", "300"]`). If any of them fails or is refused, the result's first line names those IDs; the rest lists what went through. Check that line rather than assuming the whole batch succeeded.
 
@@ -723,6 +727,7 @@ action { "action_name": "shareInTeam", "message_ids": ["1234"], "team": "Enginee
 action { "action_name": "shareInTeam", "message_ids": ["1234"], "user": ["alice@co.com", "bob@co.com"] }
 action { "action_name": "assign", "message_ids": ["1234"], "assignee": "bob@co.com" }
 action { "action_name": "assign", "message_ids": ["1234"], "assignee": "bob@co.com", "date": "2026-04-15", "comment": "Please review" }
+action { "action_name": "unassign", "message_ids": ["1234"] }
 action { "action_name": "delegationComplete", "message_ids": ["1234"] }
 action { "action_name": "delegationComplete", "message_ids": ["100", "200", "300"] }
 action { "action_name": "delegationReopen", "message_ids": ["1234"] }
@@ -771,6 +776,57 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 ```
 
 Use `contacts` to look up email addresses.
+
+### history
+
+Every call to Spark's tools and CLI - yours, the user's, and other agents' - is recorded on the user's computer: when it ran, the items it touched, and how it ended. Use `history` to check what a call did, above all the outcome of a `send`, which answers `Queued: …` before anything is sent. Entries that touched an account or shared inbox agents can't access (Settings > AI Agents) are left out. Nothing is uploaded, and entries older than 30 days are pruned.
+
+| Parameter            | Type    | Required | Description                                                                                       |
+| -------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `access`             | string  | no       | Lowest access level an entry needed: `readOnly`, `triage` (default - leaves reads out), or `send` |
+| `status`             | string  | no       | `success`, `error`, or `blocked`                                                                  |
+| `from` / `to`        | string  | no       | Date range, `yyyy-MM-dd`                                                                          |
+| `details`            | boolean | no       | Add who ran each entry, every item it touched, its arguments, and its detail                      |
+| `page` / `page_size` | integer | no       | Pagination (default 50 per page)                                                                  |
+
+```
+history {}                                        # recent changes, newest first
+history { "access": "send" }                      # sends only
+history { "status": "error", "details": true }    # what failed, and why
+history { "access": "readOnly", "from": "2026-04-10" }
+```
+
+Output:
+
+```
+  ID  Time                 Command         Status  Items
+  42  2026-04-10 09:15:02  action archive  ok      message 1234 "Quarterly report" (+2 more)
+  41  2026-04-10 09:14:40  action send     error   message 5678 "Re: Budget"
+
+Page 1 of 1 (2 total entries)
+Showing entries that needed triage access or more (--access readOnly to include reads).
+Revert one with the history-undo tool.
+```
+
+Status is `ok`, `error` (it failed - `details` says why), `blocked` (Spark refused it, or the user stopped a held send), or `undone`. A `draft` send is recorded as `action send`, and gets its entry when its 60 seconds are over.
+
+### history-undo
+
+**Requires: triage** access level.
+
+Revert what one history entry changed - unpin what was pinned, put back what was moved, restore the category a contact had, or delete a draft the tools created - and mark the entry `undone`. The undo is not recorded as an entry of its own.
+
+| Parameter | Type    | Required | Description                                      |
+| --------- | ------- | -------- | ------------------------------------------------ |
+| `id`      | integer | yes      | ID of the entry, from the ID column of `history` |
+
+```
+history-undo { "id": 42 }
+```
+
+Result: `Undid entry 42: action pin on message 14602.`
+
+It works on successful `action`, `contact-action`, and new-draft entries, while their items still exist and still hold the state the entry left them in. Undoing a new draft deletes it permanently, including any edits made since. A sent email, a deleted draft, and a calendar change can't be undone. Undo only when the user asks for it. The user can also undo an entry in Spark Desktop, under **Agent Activity**.
 
 ## Smart Categories
 
@@ -849,7 +905,7 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 
 1. `draft { "to": ["alice@co.com"], "subject": "Hi", "body": "..." }` - compose and review.
 2. `draft { "send": ["<draft-ID>"] }` - send now, or add `"date"` to schedule.
-3. `emails { "folder": "Outbox" }` after a minute - confirm it went out (`send failed` means it did not).
+3. `history { "access": "send" }` after a minute - confirm it went out (`ok`; `error` or `blocked` means it did not). `emails { "folder": "Outbox" }` is a second check.
 
 **Check someone's schedule for a meeting:**
 
@@ -930,6 +986,7 @@ contact-action { "action_name": "enableAutosummaryForContact", "emails": ["newsl
 - Before writing any draft body, call `draft { "mode": "context" }` and write in line with the Spark Profile and Custom Instructions it shows; the user's own instructions in the conversation take priority.
 - Never end a draft body with a sign-off: Spark appends the account's signature itself (`draft { "mode": "signatures" }` shows it).
 - `draft { "delete": ["<pk>"] }` discards a draft permanently - there is no Trash and no undo, so use it only when the user asked for it; it takes several IDs at once.
-- Send or schedule a draft with `draft { "send": ["<pk>"] }` (add `date` to schedule); sending waits 60 seconds for the user to undo it, so confirm the outcome in the Outbox afterwards.
+- Send or schedule a draft with `draft { "send": ["<pk>"] }` (add `date` to schedule); sending waits 60 seconds for the user to undo it, so confirm the outcome with `history` after that, and the Outbox as a second check.
 - Scheduled and unsent mail is in `emails { "folder": "Outbox" }`, not in any mail folder - check it before and after scheduling or unscheduling.
+- Use `history` to check what a call did and how it ended; when the user asks, `history-undo` reverts an action, contact action, or new draft.
 - If a write tool returns an "access denied" error, surface it to the user and point them at **Spark Desktop > Settings > AI Agents** to raise the level. They can also perform the action directly in Spark Desktop.
