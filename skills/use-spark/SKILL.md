@@ -823,7 +823,7 @@ history-undo { "id": 42 }
 
 Result: `Undid entry 42: action pin on message 14602.`
 
-It works on successful `action`, `contact-action`, and new-draft entries, while their items still exist and still hold the state the entry left them in. A sent email, a deleted draft, and a calendar change can't be undone. Undo only when the user asks for it. The user can also undo an entry in Spark Desktop, under **Agent Activity**.
+It works on successful `action`, `contact-action`, and new-draft entries, while their items still exist and still hold the state the entry left them in. Undoing a new draft deletes it permanently, including any edits made since. A sent email, a deleted draft, and a calendar change can't be undone. Undo only when the user asks for it. The user can also undo an entry in Spark Desktop, under **Agent Activity**.
 
 ## Smart Categories
 
