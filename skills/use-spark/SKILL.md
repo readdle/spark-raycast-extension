@@ -157,6 +157,7 @@ emails { "new_senders": true }
 | `is:shared_inbox_done` | completed/closed items in shared inbox                                                    |
 | `category:<name>`      | `priority`, `personal`, `notification`, `newsletter`, `invitation`, `invitation_response` |
 | `assigned_to:<who>`    | `me`, `<email>`, `unassigned`, `other`                                                    |
+| `is:unassigned`        | same as `assigned_to:unassigned`                                                          |
 | `assigned_by:me`       | emails you delegated                                                                      |
 | `filename:<name>`      | `filename:report.pdf`                                                                     |
 
@@ -676,38 +677,39 @@ Perform an action on one or more emails. Pass `action_name` plus a `message_ids`
 
 Supported `action_name` values:
 
-| Action                       | Effect                                                      |
-| ---------------------------- | ----------------------------------------------------------- |
-| `pin`                        | Pin the message to keep it at the top                       |
-| `unpin`                      | Remove the pin                                              |
-| `mute`                       | Mute the thread (stop notifications)                        |
-| `unmute`                     | Unmute a previously muted thread                            |
-| `snooze`                     | Snooze until `date`                                         |
-| `unsnooze`                   | Remove snooze, return to inbox                              |
-| `changeReminder`             | Set a follow-up reminder for `date` if no reply             |
-| `clearReminder`              | Remove the follow-up reminder                               |
-| `setAside`                   | Set aside for later review                                  |
-| `archive`                    | Archive                                                     |
-| `moveToInbox`                | Move back to inbox                                          |
-| `moveToTrash`                | Move to trash                                               |
-| `moveToFolder`               | Move to `folder`                                            |
-| `attachLabel`                | Attach Gmail/Spark Team label `folder` (keeps other labels) |
-| `detachLabel`                | Remove Gmail/Spark Team label `folder`                      |
-| `markAsDone`                 | Mark as done                                                |
-| `markAsUndone`               | Mark as not done                                            |
-| `markAsSeen`                 | Mark as read                                                |
-| `markAsUnseen`               | Mark as unread                                              |
-| `markAsSpam`                 | Mark as spam                                                |
-| `markThreadAsPriority`       | Mark thread as priority                                     |
-| `unmarkThreadAsPriority`     | Remove priority                                             |
-| `unsubscribe`                | Unsubscribe from sender/mailing list                        |
-| `changeCategoryPersonal`     | Reclassify as Personal                                      |
-| `changeCategoryNotification` | Reclassify as Notification                                  |
-| `changeCategoryNewsletters`  | Reclassify as Newsletter                                    |
-| `shareInTeam`                | Share thread with teammates (`team`, `user`)                |
-| `assign`                     | Assign to teammate (`assignee`, optional `date`, `comment`) |
-| `delegationComplete`         | Mark delegation as complete                                 |
-| `delegationReopen`           | Reopen a completed delegation                               |
+| Action                       | Effect                                                                                                                                                                      |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pin`                        | Pin the message to keep it at the top                                                                                                                                       |
+| `unpin`                      | Remove the pin                                                                                                                                                              |
+| `mute`                       | Mute the thread (stop notifications)                                                                                                                                        |
+| `unmute`                     | Unmute a previously muted thread                                                                                                                                            |
+| `snooze`                     | Snooze until `date`                                                                                                                                                         |
+| `unsnooze`                   | Remove snooze, return to inbox                                                                                                                                              |
+| `changeReminder`             | Set a follow-up reminder for `date` if no reply                                                                                                                             |
+| `clearReminder`              | Remove the follow-up reminder                                                                                                                                               |
+| `setAside`                   | Set aside for later review                                                                                                                                                  |
+| `archive`                    | Archive                                                                                                                                                                     |
+| `moveToInbox`                | Move back to inbox                                                                                                                                                          |
+| `moveToTrash`                | Move to trash                                                                                                                                                               |
+| `moveToFolder`               | Move to `folder`                                                                                                                                                            |
+| `attachLabel`                | Attach Gmail/Spark Team label `folder` (keeps other labels)                                                                                                                 |
+| `detachLabel`                | Remove Gmail/Spark Team label `folder`                                                                                                                                      |
+| `markAsDone`                 | Mark as done                                                                                                                                                                |
+| `markAsUndone`               | Mark as not done                                                                                                                                                            |
+| `markAsSeen`                 | Mark as read                                                                                                                                                                |
+| `markAsUnseen`               | Mark as unread                                                                                                                                                              |
+| `markAsSpam`                 | Mark as spam                                                                                                                                                                |
+| `markThreadAsPriority`       | Mark thread as priority                                                                                                                                                     |
+| `unmarkThreadAsPriority`     | Remove priority                                                                                                                                                             |
+| `unsubscribe`                | Unsubscribe from sender/mailing list                                                                                                                                        |
+| `changeCategoryPersonal`     | Reclassify as Personal                                                                                                                                                      |
+| `changeCategoryNotification` | Reclassify as Notification                                                                                                                                                  |
+| `changeCategoryNewsletters`  | Reclassify as Newsletter                                                                                                                                                    |
+| `shareInTeam`                | Share thread with teammates (`team`, `user`)                                                                                                                                |
+| `assign`                     | Assign to teammate (`assignee`, optional `date`, `comment`)                                                                                                                 |
+| `unassign`                   | Remove the assignment; in a shared inbox the thread returns to Unassigned. Fails if the thread is not assigned. Outside a shared inbox, reopen a completed delegation first |
+| `delegationComplete`         | Mark delegation as complete                                                                                                                                                 |
+| `delegationReopen`           | Reopen a completed delegation                                                                                                                                               |
 
 **Several messages at once:** pass several IDs in `message_ids` (`["100", "200", "300"]`). If any of them fails or is refused, the result's first line names those IDs; the rest lists what went through. Check that line rather than assuming the whole batch succeeded.
 
@@ -725,6 +727,7 @@ action { "action_name": "shareInTeam", "message_ids": ["1234"], "team": "Enginee
 action { "action_name": "shareInTeam", "message_ids": ["1234"], "user": ["alice@co.com", "bob@co.com"] }
 action { "action_name": "assign", "message_ids": ["1234"], "assignee": "bob@co.com" }
 action { "action_name": "assign", "message_ids": ["1234"], "assignee": "bob@co.com", "date": "2026-04-15", "comment": "Please review" }
+action { "action_name": "unassign", "message_ids": ["1234"] }
 action { "action_name": "delegationComplete", "message_ids": ["1234"] }
 action { "action_name": "delegationComplete", "message_ids": ["100", "200", "300"] }
 action { "action_name": "delegationReopen", "message_ids": ["1234"] }

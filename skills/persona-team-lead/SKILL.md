@@ -117,6 +117,10 @@ When following up on delegated work:
    ```
    action { "action_name": "delegationReopen", "message_ids": ["<id>"] }
    ```
+4. Remove an assignment that went to the wrong person, or send a shared inbox item back to Unassigned:
+   ```
+   action { "action_name": "unassign", "message_ids": ["<id>"] }
+   ```
 
 ## Tips
 

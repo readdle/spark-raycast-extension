@@ -82,6 +82,12 @@ If more work is needed:
 action { "action_name": "delegationReopen", "message_ids": ["<id>"] }
 ```
 
+If it went to the wrong person, remove the assignment and assign it again:
+
+```
+action { "action_name": "unassign", "message_ids": ["<id>"] }
+```
+
 ## Tips
 
 - Always include a `comment` when assigning - it saves the assignee from having to re-read the entire thread.
