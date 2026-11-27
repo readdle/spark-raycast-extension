@@ -776,7 +776,7 @@ Use `contacts` to look up email addresses.
 
 ### history
 
-Every call to Spark's tools and CLI - yours, the user's, and other agents' - is recorded on the user's computer: when it ran, the items it touched, and how it ended. Use `history` to check what a call did, above all the outcome of a `send`, which answers `Queued: …` before anything is sent. Nothing is uploaded, and entries older than 30 days are pruned.
+Every call to Spark's tools and CLI - yours, the user's, and other agents' - is recorded on the user's computer: when it ran, the items it touched, and how it ended. Use `history` to check what a call did, above all the outcome of a `send`, which answers `Queued: …` before anything is sent. Entries that touched an account or shared inbox agents can't access (Settings > AI Agents) are left out. Nothing is uploaded, and entries older than 30 days are pruned.
 
 | Parameter            | Type    | Required | Description                                                                                       |
 | -------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------- |
